@@ -1,0 +1,7 @@
+{
+	"name": "BopperBot",
+	"version": "1.0.0",
+	"description": "The first BopperBot",
+	"main": "bot.js",
+	"author": "Alden Liu"
+}
