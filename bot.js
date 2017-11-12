@@ -21,7 +21,7 @@ var skipReq = 0;
 var skippers = [];
 var streamOptions = null;
 var currentVolume = 0.20;
-
+var output = "";
 
 client.on('message', function(message) {
 	if (message.author.bot) return;
@@ -64,14 +64,9 @@ client.on('message', function(message) {
 				return;
 			}
 			var nums = Math.min(queue.length, 10);
-			output = "";
-			for (var i = 0; i < nums; i ++) {
-				fetchVideoInfo(queue[i].id, function (err, videoInfo) {
-					if (err) throw new Error(err);
-					output += i + ". **" + videoInfo.title + "**\n";
-				});
-			}
-			message.channel.send(output);
+			addToOutput(nums, function() {
+				message.channel.send(output);
+			});
 		}
 	}
 
@@ -82,11 +77,26 @@ client.on('ready', function() {
 	console.log("I am ready!");
 });
 
+// process.on('unhandledRejection', (reason, p) => {
+//   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+//   // application specific logging, throwing an error, or other logic here
+// });
+
 client.on('guildMemberAdd', function(member) {
 	var channel = member.guild.channels.find('name', 'member-log');
 	if (!channel) return;
 	channel.send('Welcome to the server, ${member}');
 });
+
+function addToOutput(nums, callback) {
+	for (var i = 0; i < nums; i ++) {
+		fetchVideoInfo(queue[i].id, function (err, videoInfo) {
+			output += i + ". **" + videoInfo.title + "**\n";
+		});
+	}
+	console.log(callback);
+	callback();
+}
 
 function commandPlay(message, args) {
 // Check to see if the caller is in a voice channel that the bot can play to
@@ -106,8 +116,6 @@ function commandPlay(message, args) {
 		} else {
 			// Play song immediately
 			isPlaying = true;
-			console.log("hello");
-			console.log(isPlaying);
 			getID(args, function(id) {
 				startPlayMusic(id, message);
 				fetchVideoInfo(id, function(err, videoInfo) {
