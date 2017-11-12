@@ -9,7 +9,7 @@ const fetchVideoInfo = require("youtube-info");
 var config = JSON.parse(fs.readFileSync('./auth.json', 'utf-8'));
 
 const yt_api_key = config.youtube_api_key;
-const bot_constroller = config.role;
+const music_bopper_role = config.role;
 const prefix = config.prefix;
 const discord_token = config.token;
 
@@ -25,7 +25,10 @@ var output = "";
 
 client.on('message', function(message) {
 	if (message.author.bot) return;
-	const member = message.member;
+	if (message.guild.members.get(message.author.id).roles[music_bopper_role] === null) {
+		message.channel.send("Nah man, you are not a bopper!");
+		return;
+	}
 	const mess = message.content.toLowerCase();
 	const args = message.content.split(' ').slice(1).join(" ");
 	if (mess.startsWith(prefix)) {
@@ -78,10 +81,10 @@ client.on('ready', function() {
 	console.log("I am ready!");
 });
 
-// process.on('unhandledRejection', (reason, p) => {
-//   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-//   // application specific logging, throwing an error, or other logic here
-// });
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
 
 client.on('guildMemberAdd', function(member) {
 	var channel = member.guild.channels.find('name', 'member-log');
@@ -143,9 +146,7 @@ function startPlayMusic(id, message) {
 		});
 
 		dispatcher = connection.playStream(stream, streamOptions);
-	}).then(function() {
-		playMusic();
-	});
+	}); // Then PlayMusic?
 }
 
 function playMusic() {
