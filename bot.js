@@ -66,6 +66,7 @@ client.on('message', function(message) {
 			var nums = Math.min(queue.length, 10);
 			addToOutput(nums, function() {
 				message.channel.send(output);
+				output = "";
 			});
 		}
 	}
@@ -89,14 +90,17 @@ client.on('guildMemberAdd', function(member) {
 });
 
 function addToOutput(nums, callback) {
+	var itemsDone = 0;
 	for (var i = 0; i < nums; i ++) {
 		fetchVideoInfo(queue[i].id, function (err, videoInfo) {
-			output += i + ". **" + videoInfo.title + "**\n";
+			output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
+			itemsDone ++;
+			if (itemsDone === nums) {
+				callback();
+			}
 		});
 	}
-	console.log(callback);
-	callback();
-}
+	}
 
 function commandPlay(message, args) {
 // Check to see if the caller is in a voice channel that the bot can play to
