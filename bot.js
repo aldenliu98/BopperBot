@@ -143,7 +143,9 @@ function startPlayMusic(id, message) {
 		});
 
 		dispatcher = connection.playStream(stream, streamOptions);
-	}).then(playMusic);
+	}).then(function() {
+		playMusic();
+	});
 }
 
 function playMusic() {
@@ -162,7 +164,9 @@ function playMusic() {
 			});
 
 			dispatcher = connection.playStream(stream, streamOptions);
-		}).then(playMusic);
+		}).then(function() {
+			playMusic();
+		});
 	}
 }
 
