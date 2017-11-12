@@ -25,18 +25,22 @@ var output = "";
 
 client.on('message', function(message) {
 	if (message.author.bot) return;
-	if (message.guild.members.get(message.author.id).roles[music_bopper_role] === null) {
-		message.channel.send("Nah man, you are not a bopper!");
-		return;
-	}
 	const mess = message.content.toLowerCase();
 	const args = message.content.split(' ').slice(1).join(" ");
 	if (mess.startsWith(prefix)) {
 		var command = mess.substring(1);
 		if (command.startsWith("play")) {
+			if (message.guild.members.get(message.author.id).roles[music_bopper_role] === null) {
+				message.channel.send("Nah man, you are not a bopper!");
+				return;
+			}
 			commandPlay(message, args);
 		} else if (command.startsWith("hello")) {
-			message.reply("hello!");
+			var name = message.guild.members.get(message.author.id).nickname;
+			if (name === null) {
+				name = message.author.username;
+			}
+			message.reply("Hello, " + name + "!");
 		} else if (command.startsWith("pause")) {
 			if (dispatcher != null && !dispatcher.paused) {
 				dispatcher.pause();
@@ -146,7 +150,9 @@ function startPlayMusic(id, message) {
 		});
 
 		dispatcher = connection.playStream(stream, streamOptions);
-	}); // Then PlayMusic?
+	}).then(function () {
+		playMusic();
+	});
 }
 
 function playMusic() {
