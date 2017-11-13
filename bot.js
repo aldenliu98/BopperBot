@@ -40,8 +40,8 @@ client.on('message', function(message) {
 			if (name === null) {
 				name = message.author.username;
 			}
-			message.reply("Hello, " + name + "!");
-		} else if (command.startsWith("pause")) {
+			message.channel.send("Hello, " + name + "!");
+		} else if (command.startsWith("pause ")) {
 			if (dispatcher != null && !dispatcher.paused) {
 				dispatcher.pause();
 				message.channel.send("Paused.");
@@ -60,10 +60,10 @@ client.on('message', function(message) {
 				}
 				message.channel.send("Set the current volume to: " + argsNum);
 			} 
-		} else if (command.startsWith("stop")) {
+		} else if (command.startsWith("skip")) {
 			if (dispatcher != null) {
 				dispatcher.end();
-				message.channel.send("Stopped.");
+				message.channel.send("Skipped.");
 			}
 		} else if (command.startsWith("queue")) {
 			if (queue.length == 0) {
@@ -85,10 +85,14 @@ client.on('ready', function() {
 	console.log("I am ready!");
 });
 
+// **************DEBUG********************
+
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
 });
+
+// ***************************************
 
 client.on('guildMemberAdd', function(member) {
 	var channel = member.guild.channels.find('name', 'member-log');
@@ -96,8 +100,18 @@ client.on('guildMemberAdd', function(member) {
 	channel.send('Welcome to the server, ${member}');
 });
 
+// Error: the order is not preserved in the queue because the fetching is not a set time, need to fix somehow...
 function addToOutput(nums, callback) {
 	var itemsDone = 0;
+	// queue.forEach(function(elem) {
+	// 	fetchVideoInfo(elem.id, function (err, videoInfo) {
+	// 		output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
+	// 		itemsDone ++;
+	// 		if (itemsDone === nums) {
+	// 			callback();
+	// 		}
+	// 	})
+	// })
 	for (var i = 0; i < nums; i ++) {
 		fetchVideoInfo(queue[i].id, function (err, videoInfo) {
 			output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
@@ -107,7 +121,7 @@ function addToOutput(nums, callback) {
 			}
 		});
 	}
-	}
+}
 
 function commandPlay(message, args) {
 // Check to see if the caller is in a voice channel that the bot can play to
@@ -128,7 +142,8 @@ function commandPlay(message, args) {
 			// Play song immediately
 			isPlaying = true;
 			getID(args, function(id) {
-				startPlayMusic(id, message);
+				queue.push({id: id, message: message});
+				playMusic(id, message);
 				fetchVideoInfo(id, function(err, videoInfo) {
 					if (err) throw new Error(err);
 					message.channel.send(" now playing: **" + videoInfo.title + "**");
@@ -140,7 +155,7 @@ function commandPlay(message, args) {
 	}
 }
 
-function startPlayMusic(id, message) {
+function playMusic(id, message) {
 	voiceChannel = message.member.voiceChannel;
 	streamOptions = { seek: 0, volume: currentVolume };
 
@@ -150,31 +165,17 @@ function startPlayMusic(id, message) {
 		});
 
 		dispatcher = connection.playStream(stream, streamOptions);
-	}).then(function () {
-		playMusic();
-	});
-}
-
-function playMusic() {
-	if (queue.length == 0) {
-		return;
-	} else {
-		var obj = queue.shift();
-		var message = obj.message;
-		var id = obj.id;
-		voiceChannel = message.member.voiceChannel;
-		streamOptions = { seek: 0, volume: currentVolume };
-
-		voiceChannel.join().then(function (connection) {
-			stream = ytdl("http://wwww.youtube.com/watch?v=" + id, {
-				filter: 'audioonly'
-			});
-
-			dispatcher = connection.playStream(stream, streamOptions);
-		}).then(function() {
-			playMusic();
+		dispatcher.on('end', function() {
+			queue.shift();
+			if (queue.length === 0) {
+				queue = [];
+				isPlaying = false;
+			} else {
+				var first = queue[0];
+				playMusic(first.id, first.message);
+			}
 		});
-	}
+	});
 }
 
 // Checks to see if str is a youtube link:
