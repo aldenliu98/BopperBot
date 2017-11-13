@@ -30,10 +30,6 @@ client.on('message', function(message) {
 	if (mess.startsWith(prefix)) {
 		var command = mess.substring(1);
 		if (command.startsWith("play")) {
-			if (message.guild.members.get(message.author.id).roles[music_bopper_role] === null) {
-				message.channel.send("Nah man, you are not a bopper!");
-				return;
-			}
 			commandPlay(message, args);
 		} else if (command.startsWith("hello")) {
 			var name = message.guild.members.get(message.author.id).nickname;
@@ -41,15 +37,21 @@ client.on('message', function(message) {
 				name = message.author.username;
 			}
 			message.channel.send("Hello, " + name + "!");
-		} else if (command.startsWith("pause ")) {
+		} else if (command.startsWith("pause")) {
 			if (dispatcher != null && !dispatcher.paused) {
+				isPlaying = false;
 				dispatcher.pause();
 				message.channel.send("Paused.");
+			} else {
+				message.channel.send("Nothing to pause...")
 			}
 		} else if (command.startsWith("resume")) {
 			if (dispatcher != null && dispatcher.paused) {
+				isPlaying = true;
 				dispatcher.resume();
 				message.channel.send("Resuming...");
+			} else {
+				message.channel.send("Nothing to resume...")
 			}
 		} else if (command.startsWith("volume")) {
 			var argsNum = parseFloat(args);
@@ -70,8 +72,10 @@ client.on('message', function(message) {
 				message.channel.send("The queue is currently empty.");
 				return;
 			}
-			var nums = Math.min(queue.length, 10);
-			addToOutput(nums, function() {
+			var status = isPlaying? "playing" : "not playing";
+			output += "Status: " + status + "\n";
+			var nums = Math.min(queue.length, 6);
+			addToOutput(nums, 0, function() {
 				message.channel.send(output);
 				output = "";
 			});
@@ -101,24 +105,28 @@ client.on('guildMemberAdd', function(member) {
 });
 
 // Error: the order is not preserved in the queue because the fetching is not a set time, need to fix somehow...
-function addToOutput(nums, callback) {
-	var itemsDone = 0;
-	// queue.forEach(function(elem) {
-	// 	fetchVideoInfo(elem.id, function (err, videoInfo) {
+function addToOutput(numToDo, itemsDone, callback) {
+	// var itemsDone = 0;
+	// for (var i = 0; i < nums; i ++) {
+	// 	fetchVideoInfo(queue[i].id, function (err, videoInfo) {
 	// 		output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
 	// 		itemsDone ++;
 	// 		if (itemsDone === nums) {
 	// 			callback();
 	// 		}
-	// 	})
-	// })
-	for (var i = 0; i < nums; i ++) {
-		fetchVideoInfo(queue[i].id, function (err, videoInfo) {
-			output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
-			itemsDone ++;
-			if (itemsDone === nums) {
-				callback();
+	// 	});
+	// }
+	if (itemsDone === numToDo) {
+		callback();
+		return;
+	} else {
+		fetchVideoInfo(queue[itemsDone].id, function (err, videoInfo) {
+			var index = itemsDone;
+			if (itemsDone === 0) {
+				index = "Now Playing"
 			}
+			output += index + ": **" + videoInfo.title + "**\n";
+			addToOutput(numToDo, itemsDone + 1, callback);
 		});
 	}
 }
@@ -173,6 +181,10 @@ function playMusic(id, message) {
 			} else {
 				var first = queue[0];
 				playMusic(first.id, first.message);
+				fetchVideoInfo(first.id, function(err, videoInfo) {
+					if (err) throw new Error(err);
+					message.channel.send(" now playing: **" + videoInfo.title + "**");
+				});
 			}
 		});
 	});
