@@ -25,6 +25,7 @@ var output = "";
 
 client.on('message', function(message) {
 	if (message.author.bot) return;
+	// if (!message.member.roles.has(music_bopper_role)) return;
 	const mess = message.content.toLowerCase();
 	const args = message.content.split(' ').slice(1).join(" ");
 	if (mess.startsWith(prefix)) {
