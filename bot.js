@@ -91,7 +91,7 @@ client.on('ready', function() {
 });
 
 // **************DEBUG********************
-if (!message.member.roles.has(music_bopper_role)) return;
+
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
@@ -107,21 +107,13 @@ client.on('guildMemberAdd', function(member) {
 
 // Error: the order is not preserved in the queue because the fetching is not a set time, need to fix somehow...
 function addToOutput(numToDo, itemsDone, callback) {
-	// var itemsDone = 0;
-	// for (var i = 0; i < nums; i ++) {
-	// 	fetchVideoInfo(queue[i].id, function (err, videoInfo) {
-	// 		output += (itemsDone + 1) + ". **" + videoInfo.title + "**\n";
-	// 		itemsDone ++;
-	// 		if (itemsDone === nums) {
-	// 			callback();
-	// 		}
-	// 	});
-	// }
 	if (itemsDone === numToDo) {
 		callback();
 		return;
 	} else {
+		console.time('starting fetch');
 		fetchVideoInfo(queue[itemsDone].id, function (err, videoInfo) {
+			console.timeEnd('starting fetch');
 			var index = itemsDone;
 			if (itemsDone === 0) {
 				index = "Now Playing"
