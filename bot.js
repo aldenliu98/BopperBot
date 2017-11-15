@@ -78,25 +78,15 @@ client.on('message', function(message) {
 			var status = isPlaying? "playing" : "not playing";
 			output += "Status: " + status + "\n";
 			var nums = Math.min(queue.length, 6);
-
-			for( var i = 0; i < namequeue.length; i++){
-
-				if(i === 0){
+			for ( var i = 0; i < nums; i++) {
+				if (i === 0) {
 					output += "Now Playing" + ": **" + namequeue[i] + "**\n";
-				}
-				else{
+				} else {
 					output += i + ": **" + namequeue[i] + "**\n";
 				}
-
 			}
-
 			message.channel.send(output);
-
 			output = "";
-			/**addToOutput(nums, 0, function() {
-				message.channel.send(output);
-				output = "";
-			}); **/
 		}
 	}
 
@@ -121,25 +111,6 @@ client.on('guildMemberAdd', function(member) {
 	if (!channel) return;
 	channel.send('Welcome to the server, ${member}');
 });
-
-// Error: the order is not preserved in the queue because the fetching is not a set time, need to fix somehow...
-function addToOutput(numToDo, itemsDone, callback) {
-	if (itemsDone === numToDo) {
-		callback();
-		return;
-	} else {
-		console.time('starting fetch');
-		fetchVideoInfo(queue[itemsDone].id, function (err, videoInfo) {
-			console.timeEnd('starting fetch');
-			var index = itemsDone;
-			if (itemsDone === 0) {
-				index = "Now Playing"
-			}
-			output += index + ": **" + videoInfo.title + "**\n";
-			addToOutput(numToDo, itemsDone + 1, callback);
-		});
-	}
-}
 
 function commandPlay(message, args) {
 // Check to see if the caller is in a voice channel that the bot can play to
@@ -190,6 +161,7 @@ function playMusic(id, message) {
 			namequeue.shift();
 			if (queue.length === 0) {
 				queue = [];
+				namequeue = [];
 				isPlaying = false;
 			} else {
 				var first = queue[0];
