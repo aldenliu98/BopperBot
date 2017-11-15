@@ -15,6 +15,7 @@ const prefix = config.prefix;
 const discord_token = config.token;
 
 var queue = [];
+var namequeue = [];
 var isPlaying = false;
 var dispatcher = null;
 var voiceChannel = null;
@@ -77,10 +78,25 @@ client.on('message', function(message) {
 			var status = isPlaying? "playing" : "not playing";
 			output += "Status: " + status + "\n";
 			var nums = Math.min(queue.length, 6);
-			addToOutput(nums, 0, function() {
+
+			for( var i = 0; i < namequeue.length; i++){
+
+				if(i === 0){
+					output += "Now Playing" + ": **" + namequeue[i] + "**\n";
+				}
+				else{
+					output += i + ": **" + namequeue[i] + "**\n";
+				}
+
+			}
+
+			message.channel.send(output);
+
+			output = "";
+			/**addToOutput(nums, 0, function() {
 				message.channel.send(output);
 				output = "";
-			});
+			}); **/
 		}
 	}
 
@@ -138,6 +154,7 @@ function commandPlay(message, args) {
 				fetchVideoInfo(id, function(err, videoInfo) {
 					if (err) throw new Error(err);
 					message.channel.send(" added to queue: **" + videoInfo.title + "**");
+					namequeue.push(videoInfo.title);
 				});
 			});
 		} else {
@@ -149,6 +166,7 @@ function commandPlay(message, args) {
 				fetchVideoInfo(id, function(err, videoInfo) {
 					if (err) throw new Error(err);
 					message.channel.send(" now playing: **" + videoInfo.title + "**");
+					namequeue.push(videoInfo.title);
 				});
 			});
 		}
@@ -169,6 +187,7 @@ function playMusic(id, message) {
 		dispatcher = connection.playStream(stream, streamOptions);
 		dispatcher.on('end', function() {
 			queue.shift();
+			namequeue.shift();
 			if (queue.length === 0) {
 				queue = [];
 				isPlaying = false;
