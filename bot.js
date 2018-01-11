@@ -9,7 +9,7 @@ const fetchVideoInfo = require("youtube-info");
 var config = JSON.parse(fs.readFileSync('./auth.json', 'utf-8'));
 
 const yt_api_key = config.youtube_api_key;
-const music_bopper_role = config.role;
+// const music_bopper_role = config.role;
 const prefix = config.prefix;
 const discord_token = config.token;
 
@@ -66,6 +66,9 @@ client.on('message', function(message) {
 			} 
 		} else if (command.startsWith("skip")) {
 			if (dispatcher != null) {
+				if (dispatcher.paused) {
+					dispatcher.resume();
+				}
 				dispatcher.end();
 				message.channel.send("Skipped.");
 			}
